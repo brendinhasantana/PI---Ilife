@@ -95,7 +95,7 @@ def editar_consulta():
 # mostrar o menu e receber a escolha do usuário
 def exibir_menu():
     while True:
-        print("\n===== Clínica Odontológica =====")
+        print("\n===== Clínica de Nutrição =====")
         print("1. Cadastrar consulta")
         print("2. Exibir todas as consultas")
         print("3. Excluir consulta")
