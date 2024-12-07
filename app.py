@@ -1,90 +1,125 @@
+import json
 import os
-import datetime
 
-# exibir o menu
-def exibir_menu():
-    print("\n---- Menu de Cadastro de Consultas ----")
-    print("1. Cadastrar nova consulta")
-    print("2. Mostrar todas as consultas cadastradas")
-    print("3. Sair")
+# Arquivo onde as consultas serão armazenadas
+ARQUIVO_CONSULTAS = 'consultas.json'
+
+
+def carregar_consultas():
+    if os.path.exists(ARQUIVO_CONSULTAS):
+        with open(ARQUIVO_CONSULTAS, 'r') as f:
+            return json.load(f)
+    else:
+        return []
+
+# salvar consultas no arquivo JSON
+def salvar_consultas(consultas):
+    with open(ARQUIVO_CONSULTAS, 'w') as f:
+        json.dump(consultas, f, indent=4)
 
 # cadastrar uma nova consulta
 def cadastrar_consulta():
-    print("\nDigite os dados da nova consulta:")
+    paciente = input("Nome do paciente: ")
+    data = input("Data da consulta (dd/mm/aaaa): ")
+    hora = input("Hora da consulta (hh:mm): ")
+    motivo = input("Motivo da consulta: ")
 
-    # dados do paciente
-    nome_paciente = input("Nome do paciente: ")
-    data_consulta = input("Data da consulta (dd/mm/aaaa): ")
-    horario_consulta = input("Horário da consulta (hh:mm): ")
-    observacoes = input("Observações (opcional): ")
-
-    try:
-        data_consulta_formatada = datetime.datetime.strptime(data_consulta, "%d/%m/%Y")
-    except ValueError:
-        print("Erro: Data inválida! Use o formato dd/mm/aaaa.")
-        return
-
-    try:
-        horario_consulta_formatado = datetime.datetime.strptime(horario_consulta, "%H:%M")
-    except ValueError:
-        print("Erro: Horário inválido! Use o formato hh:mm.")
-        return
-
-    # Salva os dados em um arquivo de texto
     consulta = {
-        'nome': nome_paciente,
-        'data': data_consulta_formatada.strftime("%d/%m/%Y"),
-        'horario': horario_consulta_formatado.strftime("%H:%M"),
-        'observacoes': observacoes if observacoes else "Nenhuma observação."
+        'id': len(consultas) + 1,
+        'paciente': paciente,
+        'data': data,
+        'hora': hora,
+        'motivo': motivo
     }
 
-    salvar_consulta(consulta)
+    consultas.append(consulta)
+    salvar_consultas(consultas)
+    print("\nConsulta cadastrada com sucesso!")
 
-    print(f"\nConsulta cadastrada com sucesso para {nome_paciente}!")
-
-# salvar a consulta no arquivo
-def salvar_consulta(consulta):
-    arquivo = "consultas.txt"
-
-    with open(arquivo, "a") as f:
-        f.write(f"Paciente: {consulta['nome']}\n")
-        f.write(f"Data: {consulta['data']}\n")
-        f.write(f"Horário: {consulta['horario']}\n")
-        f.write(f"Observações: {consulta['observacoes']}\n")
-        f.write("-" * 40 + "\n")
-
-# exibir todas as consultas cadastradas
+# exibir as consultas cadastradas
 def exibir_consultas():
-    arquivo = "consultas.txt"
-
-    if not os.path.exists(arquivo):
-        print("\nAinda não há consultas cadastradas.")
-        return
-    
-    with open(arquivo, "r") as f:
-        consultas = f.read()
-
     if consultas:
-        print("\n---- Consultas Cadastradas ----")
-        print(consultas)
+        print("\nConsultas cadastradas:")
+        for consulta in consultas:
+            print(f"\nID: {consulta['id']}")
+            print(f"Paciente: {consulta['paciente']}")
+            print(f"Data: {consulta['data']}")
+            print(f"Hora: {consulta['hora']}")
+            print(f"Motivo: {consulta['motivo']}")
+            print('-' * 30)
     else:
-        print("\nNão há consultas registradas.")
+        print("\nNão há consultas cadastradas.")
 
-# Função principal
-def main():
+# excluir uma consulta
+def excluir_consulta():
+    exibir_consultas()
+    try:
+        id_consulta = int(input("\nDigite o ID da consulta que deseja excluir: "))
+        consulta_encontrada = next((consulta for consulta in consultas if consulta['id'] == id_consulta), None)
+        
+        if consulta_encontrada:
+            consultas.remove(consulta_encontrada)
+            salvar_consultas(consultas)
+            print(f"\nConsulta com ID {id_consulta} excluída com sucesso!")
+        else:
+            print("\nConsulta não encontrada.")
+    except ValueError:
+        print("\nID inválido!")
+
+# editar consulta
+def editar_consulta():
+    exibir_consultas()
+    try:
+        id_consulta = int(input("\nDigite o ID da consulta que deseja editar: "))
+        consulta_encontrada = next((consulta for consulta in consultas if consulta['id'] == id_consulta), None)
+        
+        if consulta_encontrada:
+            print("\nEditando consulta...")
+            paciente = input(f"Nome do paciente ({consulta_encontrada['paciente']}): ") or consulta_encontrada['paciente']
+            data = input(f"Data da consulta ({consulta_encontrada['data']}): ") or consulta_encontrada['data']
+            hora = input(f"Hora da consulta ({consulta_encontrada['hora']}): ") or consulta_encontrada['hora']
+            motivo = input(f"Motivo da consulta ({consulta_encontrada['motivo']}): ") or consulta_encontrada['motivo']
+
+            consulta_encontrada['paciente'] = paciente
+            consulta_encontrada['data'] = data
+            consulta_encontrada['hora'] = hora
+            consulta_encontrada['motivo'] = motivo
+            
+            salvar_consultas(consultas)
+            print(f"\nConsulta com ID {id_consulta} editada com sucesso!")
+        else:
+            print("\nConsulta não encontrada.")
+    except ValueError:
+        print("\nID inválido!")
+
+# mostrar o menu e receber a escolha do usuário
+def exibir_menu():
     while True:
-        exibir_menu()
-        opcao = input("Escolha uma opção: ")
+        print("\n===== Clínica Odontológica =====")
+        print("1. Cadastrar consulta")
+        print("2. Exibir todas as consultas")
+        print("3. Excluir consulta")
+        print("4. Editar consulta")
+        print("5. Sair")
+        
+        escolha = input("Escolha uma opção: ")
 
-        if opcao == "1":
+        if escolha == '1':
             cadastrar_consulta()
-        elif opcao == "2":
+        elif escolha == '2':
             exibir_consultas()
-        elif opcao == "3":
-            print("Saindo... Até logo!")
+        elif escolha == '3':
+            excluir_consulta()
+        elif escolha == '4':
+            editar_consulta()
+        elif escolha == '5':
+            print("\nSaindo...")
             break
         else:
-            print("Opção inválida, tente novamente.")
+            print("\nOpção inválida, tente novamente.")
 
-if __name__ == "__main__":
-    main()
+# Carregar consultas ao iniciar o programa
+consultas = carregar_consultas()
+
+# Executar o menu
+exibir_menu()
